@@ -8,7 +8,7 @@ class Command(BaseCommand):
     help = 'Sync attendance logs from biometric device'
 
     def handle(self, *args, **kwargs):
-        zk = ZK('192.168.1.20', port=4370, timeout=5)  # Update IP & port as needed
+        zk = ZK('192.168.110.201', port=4370, timeout=5)  # Update IP & port as needed
 
         try:
             conn = zk.connect()
