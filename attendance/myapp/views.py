@@ -15,6 +15,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_protect
 
+# User Login and Signup
 @csrf_protect
 def admin_auth(request):
     if request.method == 'POST':
@@ -47,7 +48,7 @@ def admin_auth(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, "Login successful.")
-                return redirect('api_attendance_summary')  # change to your desired redirect
+                return redirect('api_attendance_summary')  
             else:
                 messages.error(request, "Invalid email or password.")
                 return redirect('admin_auth')
@@ -92,8 +93,8 @@ def api_attendance_summary(request):
     ).annotate(
         first_punch=Min('timestamp'),
         last_punch=Max('timestamp'),
-        in_count=Count('id', filter=Q(status='IN')),   # ✅ changed from punch_type to status
-        out_count=Count('id', filter=Q(status='OUT'))  # ✅
+        in_count=Count('id', filter=Q(status='IN')),   
+        out_count=Count('id', filter=Q(status='OUT'))  
     ).order_by('-timestamp__date') 
 
     for item in summary:
