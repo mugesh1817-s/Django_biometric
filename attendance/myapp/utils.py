@@ -1,12 +1,12 @@
 from django.core.management.base import BaseCommand
 from zk import ZK
 from django.utils import timezone
-from myapp.models import Attendance, Employee  # Replace 'myapp' with your app name
+from myapp.models import Attendance, Employee 
 
 
 
 def sync_attendance():
-    zk = ZK('192.168.1.201', port=4370, timeout=5)  # Update with your actual device IP & port
+    zk = ZK('192.168.1.201', port=4370, timeout=5)  
 
     try:
         conn = zk.connect()
