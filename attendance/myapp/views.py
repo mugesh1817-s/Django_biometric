@@ -115,43 +115,62 @@ def api_attendance_summary(request):
 
 @api_view(['GET'])
 def api_export_attendance_excel(request):
-    import openpyxl
+    search = request.GET.get('search')            
+    start_date = request.GET.get('start_date')   
+    end_date = request.GET.get('end_date')        
 
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-
+    # Get all records
     records = Attendance.objects.select_related('employee').all()
 
+    # Filter by employee name
+    if search:
+        records = records.filter(employee__name__icontains=search)
+
+    # Filter by start_date
     if start_date:
-        parsed_start = parse_date(start_date)
-        if parsed_start:
-            records = records.filter(timestamp__date__gte=parsed_start)
+        try:
+            parsed_start = parse_date(start_date)
+            if parsed_start:
+                records = records.filter(timestamp__date__gte=parsed_start)
+        except:
+            return HttpResponse("Invalid start date format", status=400)
 
+    # Filter by end_date
     if end_date:
-        parsed_end = parse_date(end_date)
-        if parsed_end:
-            records = records.filter(timestamp__date__lte=parsed_end)
+        try:
+            parsed_end = parse_date(end_date)
+            if parsed_end:
+                records = records.filter(timestamp__date__lte=parsed_end)
+        except:
+            return HttpResponse("Invalid end date format", status=400)
 
-    wb = openpyxl.Workbook()
+    # If no matching records
+    if not records.exists():
+        return HttpResponse("No records found for given filters", status=404)
+
+    # Create Excel sheet
+    wb = Workbook()
     ws = wb.active
-    ws.title = "Attendance Records"
+    ws.title = "Filtered Attendance"
+    ws.append(["Employee", "User ID", "Status", "Timestamp"])
 
-    ws.append(["Employee Name", "User ID", "Status", "Timestamp"])
-
-    for record in records.order_by('-timestamp'):
+    for record in records.order_by('timestamp'):
         ws.append([
             record.employee.name,
             record.employee.user_id,
             record.status,
-            record.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            record.timestamp.strftime('%Y-%m-%d %I:%M %p')
         ])
 
+    # Prepare file
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = 'attachment; filename=attendance.xlsx'
+    filename = f"attendance_{search or 'all'}_{start_date}_to_{end_date}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename={filename}'
     wb.save(response)
     return response
+
 
 @api_view(['POST'])
 def api_run_attendance_sync(request):
